@@ -1,0 +1,6 @@
+&a058	# gap entry, from pc=&cd4c LR=&6800cd53
+&a098	# gap entry, from pc=&a078 LR=&6800cd53
+&a384	# gap entry, from pc=&a0a4 LR=&6800cd53
+&ce2c	# gap entry, from pc=&cd4c LR=&6800cd53
+&ce34	# gap entry, from pc=&ce28 LR=&6800ce37
+&cec0	# gap entry, from pc=&cd7c LR=&2800cda7
