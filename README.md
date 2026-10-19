@@ -91,11 +91,17 @@ Not done, and differences
   and then picks its clock from what it measured. libroger doesn't deliver
   interrupts through a program's own &18 vector, so DDT is loaded without
   options and keeps its default clock (tools/images.py MODULE_ARGS).
-- The intro's goblin scene: its lines aren't shown, and each waits for the
-  game's timeout (about 20 seconds) instead of the animation that should
-  end it. The right button skips it; the game itself shows its text. Not
-  the translation: run with ROGER_INTERPRET=1 the same scenario is byte for
-  byte the same (events, registers, screen) to 300M instructions.
+- Headless runs (--limit) run the CPU at 16 MIPS (game.c headless_mips),
+  an ARM3's speed, not libroger's default 2: the game's script waits for
+  syncs that its animations (run from a ticker event) send, and at 2 MIPS
+  (or an ARM2's 4.5) it falls behind, misses them and sits out each wait's
+  20 second timeout - the intro's goblin scene showed no text and crawled.
+  Interactive runs are unthrottled. Scale --limit to match: 16M
+  instructions a second of the game.
+- Headless, a scripted click is taken or ignored depending on when it
+  lands (at 8 MIPS a click at 22s answers the protection, at 25s it
+  doesn't). At 16 MIPS the answers used in testing (clicks at 20, 26 and
+  30 seconds) are taken. Not looked into further; interactive clicks work.
 - Roots: the program's (analysis/simon.roots) are calls through a table of
   script handlers ORed with a mode word, and returns into its callers from
   interpreted code; DDT's (analysis/ddt.roots) are the mixers its jump

@@ -47,6 +47,12 @@ static struct roger_config config = {
     .command_line = "<Simon$Dir>.execute.!Runner <Simon$Dir>.execute.gamebase 0",
     .initial_mode = 12,                 /* a desktop mode: the game sets its own */
     .wimpslot = 640 * 1024,             /* the front end checks for 640K */
+    /* headless runs: an ARM3's speed. The script waits for syncs its
+     * animations (run from a ticker event) send; at libroger's default 2
+     * MIPS the script falls behind, misses them and sits out each wait's
+     * 20 second timeout (the intro's goblin scene). Interactive runs are
+     * unthrottled */
+    .headless_mips = 16,
     .interpreted = interpreted,
     .init = game_init,
 };
