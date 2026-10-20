@@ -34,7 +34,7 @@ What it makes:
     recomp/simon             the game
 
 Committed: recipe.json, build.sh, tools/ (images.py, unpack.c), analysis/*.roots,
-recomp/ (Makefile, game.c), this file.
+recomp/ (Makefile, game.c, simon.ini), this file.
 
 Playing
 -------
