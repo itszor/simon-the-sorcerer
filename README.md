@@ -76,7 +76,10 @@ game.c does the last directly (command line as the front end's).
   counter in zero page and IOC timer 0's latch for its clock. Its mixer
   runs in USR mode with interrupts on, using r13/r14 as working registers
   (saved with stm ^), and gets back to SVC mode through a branch it puts
-  in the undefined instruction vector (&4).
+  in the undefined instruction vector (&4). It patches its mixers' output
+  stores for the tune's channel count (str r0,[r12],#8 becomes #4 for a
+  4-channel tune, as Simon's are): libroger interprets those words as
+  they now are.
 - Files: there is no <Simon$Dir>.00.0000 (the hard disc installer's
   marker), so the game reads ADFS::0.$.!Simon - the floppies - with the
   rooms still compressed, as the installer would have unpacked them. All
@@ -104,9 +107,15 @@ Not done, and differences
   30 seconds) are taken. Not looked into further; interactive clicks work.
 - Roots: the program's (analysis/simon.roots) are calls through a table of
   script handlers ORed with a mode word, and returns into its callers from
-  interpreted code; DDT's (analysis/ddt.roots) are the mixers its jump
-  table (adds pc,pc,r1,lsl #2 on four channel bits) leads to, which the
-  analysis doesn't bound.
+  interpreted code; DDT's (analysis/ddt.roots) are where its trap through
+  the undefined instruction vector returns to (&1842DF4, the branch it
+  puts at &4) and the code that follows on from there. Its
+  mixers no longer need roots (SuperSpider finds them, below): with the
+  two the first tune uses as roots and the other thirteen untranslated,
+  the next tune (Tunes.8tune, outside the blacksmith's) branched to an
+  untranslated mixer inside the sound interrupt, which libroger ends, so
+  the DMA buffer was never refilled and played the same 10ms over and
+  over - a monotone buzz from the fourth screen on.
 
 What it needed
 --------------
@@ -124,6 +133,16 @@ SuperSpider (src/s1.ml, src/arm2.ml, src/gen.ml):
 - an unconditional instruction from the undefined space as a trap that
   carries on after it, when code runs into it
 - LDM/STM ^ without the PC: the user bank (gen: LDM_RU, user_reg)
+- a table of branches after add pc,pc,rX,lsl #2 with rX unknown (DDT's
+  mixers: rX the mask of the active channels, 1-15, built with orrne's
+  the analysis widens away; slot 0, never used, isn't an instruction)
+- runs of identical blocks of up to 16 words entered backwards (sub
+  pc,sp,r0,lsl #3 into DDT's mixer loops: ten-word blocks, a sample from
+  each of two channels), not only up to 4
+- a guarded computed jump's index (cmp rX,#n ; addls pc,pc,rX,lsl #2)
+  bounded by the guard whatever else is known of it, a field loaded from
+  memory too (this also finds more of Elite's and Star Fighter 3000's
+  cases)
 
 libroger:
 - OS_ChangeEnvironment 0 and 14 (MemoryLimit, ApplicationSpace) read the
@@ -137,6 +156,11 @@ libroger:
 - IOC timer 0's latch command and count, and the centisecond counter at
   &A38 (RISC OS 3's zero page)
 - module parameters in R10 at initialisation (roger_module.args, *RMLoad's)
+- self-modified code in modules too (Desktop Tracker's mixer strides:
+  without them the mixers wrote 8 bytes a frame into 4-byte frames, so
+  only the first half of each 5ms mix was in the DMA buffer, spread over
+  all of it, and the rest went past its end - a 200Hz buzz over broken
+  notes); the DMA buffer interrupt when the buffer ends
 - ROGER_INTERPRET=1: interpret everything (debugging a translation)
 
 Regression: the other games' headless runs (30M instructions) are
